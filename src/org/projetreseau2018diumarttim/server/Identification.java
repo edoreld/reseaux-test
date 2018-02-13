@@ -26,7 +26,7 @@ public class Identification implements Runnable
 	public void run() {
 		String[] addressBookLines;
 		boolean auth = false;
-		int loginAttempts = 0;
+		int loginAttempts = 1;
 
 		System.out.println("Identification Phase");
 		System.out.println("####################");
@@ -41,8 +41,16 @@ public class Identification implements Runnable
 			}
 
 			try {
+				long t0 = System.currentTimeMillis();
 				login = in.readLine();
+				// socket.setSoTimeout(5000);
 				pass = in.readLine();
+				long tDelta = System.currentTimeMillis() - t0;
+				if (tDelta < 1000) {
+					out.println("robot");
+					out.flush();
+					break;
+				}
 			} catch (IOException e) {
 				throw new IllegalStateException(e);
 			}
@@ -61,11 +69,20 @@ public class Identification implements Runnable
 						auth = true;
 					}
 				}
+				if (!auth && loginAttempts < 3) {
+					out.println("wrong-login");
+					out.flush();
+				}
 				ab.close();
 			} catch (FileNotFoundException e) {
 				throw new IllegalStateException(e);
 			}
 			loginAttempts++;
+		}
+
+		if (loginAttempts == 3 && auth == false) {
+			out.println("too-many-attemps");
+			out.flush();
 		}
 
 		if (auth == true) {
